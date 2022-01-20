@@ -22,6 +22,7 @@ const useCardStore = create<{
     renoise: (all? : false) => void,
     bump: (i: number) => void,
     turn: (i: number) => void,
+    flip: (i: number) => void,
     saveImage?: (n : string) => void,
     setSaveImage: (f : (n : string) => void) => void,
 }>(set => ({
@@ -63,17 +64,17 @@ const useCardStore = create<{
         }
     }),
     bump: (i) => {
+        let prev : number;
         set(state => {
-            console.log('bump');
             const cards = state.cards;
-            cards[i].tablePosition[2] = .5;
+            prev = cards[i].tablePosition[2];
+            cards[i].tablePosition[2] = prev + 1;
         });
         setTimeout(
             () =>
                 set(state => {
-                    console.log('reset');
                     const cards = state.cards;
-                    cards[i].tablePosition[2] = 0;
+                    cards[i].tablePosition[2] = prev;
                 }),
             100
         );
@@ -81,6 +82,10 @@ const useCardStore = create<{
     turn: (i) => set(state => {
         const cards = state.cards;
         cards[i].turn = !cards[i].turn;
+    }),
+    flip: (i) => set(state => {
+        const cards = state.cards;
+        cards[i].flip = !cards[i].flip;
     }),
 }));
 
@@ -99,6 +104,7 @@ function createDeck (chaos : number) : Card[] {
             tablePosition: initialCardPosition,
             noise: makeNoise(chaos),
             turn: false,
+            flip: false,
         });
     }
     return cards;

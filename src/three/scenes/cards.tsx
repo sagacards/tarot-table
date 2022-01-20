@@ -10,6 +10,7 @@ import BaseCard from '../card';
 import { cardThickeness } from '../primitives/geometry';;
 import useDeck, { url } from '../primitives/textures';
 import useCardStore from '../../store/cards';
+import { functionalUpdate } from 'react-query/types/core/utils';
 
 
 
@@ -21,7 +22,7 @@ import useCardStore from '../../store/cards';
 export default function CardsScene (props: GroupProps) {
 
     // Utilize data store.
-    const { deck : _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump, turn } = useCardStore();
+    const { deck : _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump, turn, flip } = useCardStore();
 
     const deck = useDeck(_deck);
     const textures = deck ? useLoader(THREE.TextureLoader, deck.map(x => x.image)) : [];
@@ -83,7 +84,7 @@ export default function CardsScene (props: GroupProps) {
                             (state.mouse.y * state.viewport.height) / 3,
                             .125
                         ],
-                        rotation: dragTilt([0, 0, cards[i].turn ? Math.PI / 2 : 0], drag.current),
+                        rotation: dragTilt([0, cards[i].flip ? 0 : Math.PI, cards[i].turn ? Math.PI / 2 : 0], drag.current),
                         // config: cardMovementSpringConf
                     };
                 }
@@ -105,7 +106,7 @@ export default function CardsScene (props: GroupProps) {
                     key={`card${card.index}`}
                     scale={cardScale}
                     {...springs[i]}
-                    onClick={e => onCardClick(e, card, cards, drawn, draw, renoise, bump, reset, turn, drag.current)}
+                    onClick={e => onCardClick(e, card, cards, drawn, draw, renoise, bump, reset, turn, drag.current, flip)}
                     materials={<>
                         <meshStandardMaterial attachArray='material' map={textures[78]} />
                         <meshStandardMaterial attachArray='material' color={'#999'} />
@@ -179,7 +180,7 @@ function layoutCard (
             card.tablePosition[1],
             card.tablePosition[2] + cardThickeness * drawn.indexOf(card),
         ] as [number, number, number],
-        rotation: [0, 0, card.turn ? Math.PI / 2 : 0] as [number, number, number],
+        rotation: [0, card.flip ? 0 : Math.PI, card.turn ? Math.PI / 2 : 0] as [number, number, number],
     };
 };
 
@@ -200,30 +201,24 @@ function onCardClick (
     reset   : () => void,
     turn    : (i : number) => void,
     drag    : DragRef,
+    flip    : (i : number) => void,
 ) {
-    console.log(event.sourceEvent.type)
     event.stopPropagation();
     const isDrawn = drawn.includes(card);
-    switch (event.sourceEvent.type) {
-        case 'click':
-            if (!isDrawn) {
-                // TODO: This doesn't work
-                // bump(drawn.length);
-                draw();
-                renoise();
-            } else {
-                if (drag.dragged) {
-                    drag.dragged = false;
-                    return;
-                }
-                turn(cards.indexOf(card));
-            }
-            break;
-        case 'contextmenu':
-            if (!isDrawn) {
-                reset();
-            }
-            break;
+    if (!isDrawn) {
+        draw();
+        renoise();
+    } else {
+        if (drag.dragged) {
+            drag.dragged = false;
+            return;
+        }
+        if (!card.flip) {
+            flip(cards.indexOf(card));
+            bump(cards.indexOf(card));
+        } else {
+            turn(cards.indexOf(card));
+        }
     }
 };
 
@@ -287,6 +282,7 @@ export interface Card {
         rotation: [number, number, number];
     };
     turn: boolean;
+    flip: boolean;
 };
 
 // An object for tracking drag and drop
@@ -354,15 +350,15 @@ function dragTilt(
 ) {
     const { vX, vY, dX, dY } = drag;
     return [
-        THREE.MathUtils.clamp(
-            baseRotation[0] + vY * dY * factor,
+        baseRotation[0] + THREE.MathUtils.clamp(
+            vY * dY * factor,
             -0.25 * rangeFactor,
             0.25 * rangeFactor
         ),
-        THREE.MathUtils.clamp(
-            baseRotation[1] + (vX * dX * factor),
-            (-0.25 + baseRotation[1]) * rangeFactor,
-            (0.25 + baseRotation[1]) * rangeFactor
+        baseRotation[1] + THREE.MathUtils.clamp(
+            vX * dX * factor,
+            -0.25 * rangeFactor,
+            0.25 * rangeFactor
         ),
         baseRotation[2]
     ];
