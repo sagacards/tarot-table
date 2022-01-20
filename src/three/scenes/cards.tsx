@@ -11,6 +11,8 @@ import BaseCard from '../card';
 import { cardDimensions, cardThickeness } from '../primitives/geometry';
 import { tableDimensions } from '../table';
 import useDeck, { url } from '../primitives/textures';
+import useCardStore from '../../store/cards';
+
 
 
 /////////////////////
@@ -21,10 +23,9 @@ import useDeck, { url } from '../primitives/textures';
 export default function CardsScene (props: GroupProps) {
 
     // Utilize data store.
-    const { cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump } = useStore();
+    const { deck : _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump } = useCardStore();
 
-    const deck = useDeck();
-    console.log(deck);
+    const deck = useDeck(_deck);
     const textures = deck ? deck.map(x => useLoader(THREE.TextureLoader, `${url}${x.image}`)) : [];
 
     // Admin UI things.
@@ -106,11 +107,11 @@ export default function CardsScene (props: GroupProps) {
                     key={`card${card.index}`}
                     scale={cardScale}
                     {...springs[i]}
-                    onClick={e => onCardClick(e, card, cards, drawn, draw, renoise, bump)}
+                    onClick={e => onCardClick(e, card, cards, drawn, draw, renoise, bump, reset)}
                     materials={<>
-                        <meshStandardMaterial attachArray='material' color={'#666'} map={textures[78]} />
+                        <meshStandardMaterial attachArray='material' map={textures[78]} />
                         <meshStandardMaterial attachArray='material' color={'#999'} />
-                        <meshStandardMaterial attachArray='material' color={'white'} map={textures[i]} />
+                        <meshStandardMaterial attachArray='material' map={textures[card.index]} />
                     </>}
                 />
             </animated.group>
@@ -124,86 +125,14 @@ export default function CardsScene (props: GroupProps) {
 /////////////////
 
 
-const cardScale = 0.5;
-const tableMargin = 0.1;
-const globalChaos = 0.2;
-const initialCardPosition = [1.2, -1, 0.01] as [number, number, number];
-const deckLayout = {
+export const cardScale = 0.5;
+export const tableMargin = 0.1;
+export const globalChaos = 0.2;
+export const initialCardPosition = [1.2, -1, 0.01] as [number, number, number];
+export const deckLayout = {
     position: [2.8, -1, 0] as [number, number, number],
     rotation: [0, Math.PI, 0] as [number, number, number],
 };
-
-
-////////////
-// State //
-//////////
-
-
-// TODO: Flipped cards.
-// TODO: Bumping.
-
-const useStore = zustand<{
-    chaos: number,
-    setChaos: (chaos : number) => void,
-    cards: Card[],
-    updateCard: (i : number, tablePosition: Card['tablePosition']) => void,
-    drawn: Card[],
-    draw: () => void,
-    shuffle: () => void,
-    reset: () => void,
-    renoise: (all? : false) => void,
-    bump: (i: number) => void,
-}>(set => ({
-    chaos: globalChaos,
-    setChaos: (chaos) => set(state => ({ chaos })),
-    cards: shuffle(createDeck(globalChaos)),
-    updateCard: (i, pos) => set(state => {
-        const cards = state.cards;
-        const bounds = [
-            tableDimensions[0] / 2 - (cardDimensions[0] * cardScale) / 2 - tableMargin,
-            tableDimensions[1] / 2 - (cardDimensions[1] * cardScale) / 2 - tableMargin,
-        ];
-        cards[i].tablePosition = [
-            THREE.MathUtils.clamp(pos[0], -bounds[0], bounds[0]),
-            THREE.MathUtils.clamp(pos[1], -bounds[1], bounds[1]),
-            pos[2],
-        ];
-        return { cards };
-    }),
-    drawn: [],
-    draw: () => set(state => ({
-        drawn: [...state.drawn, state.cards[(state.cards.length - 1) - state.drawn.length]],
-    })),
-    shuffle: () => set(state => ({ cards: shuffle(state.cards) })),
-    reset: () => set(state => ({ drawn: [], cards: shuffle(state.cards) })),
-    renoise: (all) => set(state => {
-        const cards = state.cards;
-        for (let i = state.cards.length - 1; i >= 0; i--) {
-            if (all || i >= cards.length - state.drawn.length - 5) {
-                cards[i].noise = makeNoise(state.chaos)
-            }
-        }
-        return {
-            cards: cards,
-        }
-    }),
-    bump: (i) => {
-        set(state => {
-            console.log('bump');
-            const cards = state.cards;
-            cards[i].tablePosition[2] = .5;
-        });
-        setTimeout(
-            () =>
-                set(state => {
-                    console.log('reset');
-                    const cards = state.cards;
-                    cards[i].tablePosition[2] = 0;
-                }),
-            100
-        );
-    },
-}));
 
 
 //////////////////////////////////
@@ -247,7 +176,11 @@ function layoutCard (
     chaos : number = .1
 ) {
     return {
-        position: card.tablePosition,
+        position: [
+            card.tablePosition[0],
+            card.tablePosition[1],
+            card.tablePosition[2] + cardThickeness * drawn.indexOf(card),
+        ] as [number, number, number],
         rotation: [0, 0, 0] as [number, number, number],
     };
 };
@@ -266,13 +199,25 @@ function onCardClick (
     draw    : () => void,
     renoise : () => void,
     bump    : (i : number) => void,
+    reset   : () => void,
 ) {
+    console.log(event.sourceEvent.type)
     event.stopPropagation();
-    if (!drawn.includes(card)) {
-        // TODO: This doesn't work
-        // bump(drawn.length);
-        draw();
-        renoise();
+    const isDrawn = drawn.includes(card);
+    switch (event.sourceEvent.type) {
+        case 'click':
+            if (!isDrawn) {
+                // TODO: This doesn't work
+                // bump(drawn.length);
+                draw();
+                renoise();
+            }
+            break;
+        case 'contextmenu':
+            if (!isDrawn) {
+                reset();
+            }
+            break;
     }
 };
 
@@ -328,7 +273,7 @@ function bindGestures (
 ///////////////
 
 
-interface Card {
+export interface Card {
     index: number;
     tablePosition: [number, number, number];
     noise: {
@@ -362,52 +307,6 @@ interface MouseRef {
         y: number;
     };
     object?: THREE.Object3D;
-}
-
-
-/////////////////////
-// Deck Functions //
-///////////////////
-
-
-// Generate a deck of 78 tarot cards.
-function createDeck (chaos : number) : Card[] {
-    const cards = [];
-    while (cards.length < 78) {
-        cards.push({
-            index: cards.length,
-            tablePosition: initialCardPosition,
-            noise: makeNoise(chaos),
-        });
-    }
-    return cards;
-};
-
-// Adds minor variation to card properies for a more natural feeling.
-function makeNoise (chaos : number) {
-    return {
-        position : [
-            (.075 * chaos) * (Math.random() * 2 - 1),
-            (.075 * chaos) * (Math.random() * 2 - 1),
-            0,
-        ] as [number, number, number],
-        rotation : [
-            0,
-            0,
-            (.075 * chaos) * (Math.random() * 2 - 1)
-        ] as [number, number, number],
-    };
-};
-
-// A Fisher-Yates shuffle.
-function shuffle<T> (array : T[]) : T[] {
-    for (let i = array.length - 1; i >= 0; i--) {
-        const randomIndex = Math.floor(Math.random() * array.length);
-        const card = array[i];
-        array[i] = array[randomIndex];
-        array[randomIndex] = card;
-    };
-    return array;
 }
 
 

@@ -1,0 +1,194 @@
+type User = 
+ variant {
+   address: AccountIdentifier;
+   "principal": principal;
+ };
+type TransferResponse = 
+ variant {
+   err:
+    variant {
+      CannotNotify: AccountIdentifier;
+      InsufficientBalance;
+      InvalidToken: TokenIdentifier;
+      Other: text;
+      Rejected;
+      Unauthorized: AccountIdentifier;
+    };
+   ok: Balance;
+ };
+type TransferRequest = 
+ record {
+   amount: Balance;
+   from: User;
+   memo: Memo;
+   notify: bool;
+   subaccount: opt SubAccount;
+   to: User;
+   token: TokenIdentifier;
+ };
+type TokenIndex__1 = nat32;
+type TokenIndex = nat32;
+type TokenIdentifier = text;
+type TokenExt = 
+ record {
+   TokenIndex;
+   opt vec Listing;
+   opt vec nat8;
+ };
+type Token = 
+ record {
+   metadata: MetaData;
+   owner: AccountIdentifier;
+ };
+type Tag = text;
+type SubAccount = vec nat8;
+type StreamingStrategy = variant {
+                           Callback:
+                            record {
+                              callback: StreamingCallback;
+                              token: StreamingCallbackToken;
+                            };};
+type StreamingCallbackToken = 
+ record {
+   content_encoding: text;
+   index: nat;
+   key: text;
+ };
+type StreamingCallbackResponse = 
+ record {
+   body: blob;
+   token: opt StreamingCallbackToken;
+ };
+type StreamingCallback = func (StreamingCallbackToken) ->
+                          (StreamingCallbackResponse) query;
+type Result_2 = 
+ variant {
+   err: CommonError;
+   ok: vec TokenIndex__1;
+ };
+type Result_1 = 
+ variant {
+   err: CommonError;
+   ok: vec TokenExt;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok;
+ };
+type Response__1 = 
+ variant {
+   err: CommonError;
+   ok: Balance;
+ };
+type Response = 
+ record {
+   body: blob;
+   headers: vec HeaderField;
+   status_code: nat16;
+   streaming_strategy: opt StreamingStrategy;
+ };
+type Request__1 = 
+ record {
+   owner: User;
+   spender: principal;
+   token: TokenIdentifier;
+ };
+type Request = 
+ record {
+   body: blob;
+   headers: vec HeaderField;
+   method: text;
+   url: text;
+ };
+type MetadataResponse = 
+ variant {
+   err: CommonError;
+   ok: Metadata;
+ };
+type Metadata = 
+ variant {
+   fungible:
+    record {
+      decimals: nat8;
+      metadata: opt blob;
+      name: text;
+      symbol: text;
+    };
+   nonfungible: record {metadata: opt blob;};
+ };
+type MetaData = 
+ record {
+   artists: vec text;
+   cards: vec Card;
+   description: text;
+   image: text;
+   name: text;
+   thumbnail: text;
+ };
+type Meta = 
+ record {
+   description: text;
+   filename: FilePath;
+   name: text;
+   tags: vec Tag;
+ };
+type Memo = blob;
+type Listing = 
+ record {
+   locked: opt int;
+   price: nat64;
+   seller: principal;
+ };
+type InternetComputerNFTCanister = 
+ service {
+   addAdmin: (principal) -> ();
+   airdrop: () -> ();
+   allowance: (Request__1) -> (Response__1);
+   approve: (ApproveRequest) -> ();
+   buildWhitelist: () -> ();
+   getAdmins: () -> (vec principal) query;
+   http_request: (Request) -> (Response) query;
+   installCap: () -> (principal);
+   isAdmin: (principal) -> (bool) query;
+   metadata: (TokenIdentifier) -> (MetadataResponse) query;
+   mintRandom: (principal) -> ();
+   purgeAssets: (text, opt text) -> (Result);
+   readLedger: () -> (vec opt Token) query;
+   readWhitelist: () -> (vec TokenIdentifier) query;
+   removeAdmin: (principal) -> ();
+   tokenId: (TokenIndex__1) -> (TokenIdentifier) query;
+   tokens: (AccountIdentifier) -> (Result_2) query;
+   tokens_ext: (AccountIdentifier) -> (Result_1) query;
+   transfer: (TransferRequest) -> (TransferResponse);
+   upload: (vec blob) -> ();
+   uploadClear: () -> ();
+   uploadFinalize: (text, Meta) -> (Result);
+ };
+type HeaderField = 
+ record {
+   text;
+   text;
+ };
+type FilePath = text;
+type CommonError = 
+ variant {
+   InvalidToken: TokenIdentifier;
+   Other: text;
+ };
+type Card = 
+ record {
+   chaos: nat8;
+   image: text;
+   index: nat8;
+ };
+type Balance = nat;
+type ApproveRequest = 
+ record {
+   allowance: Balance;
+   spender: principal;
+   subaccount: opt SubAccount;
+   token: TokenIdentifier;
+ };
+type AccountIdentifier = text;
+service : (text, text, text) -> InternetComputerNFTCanister

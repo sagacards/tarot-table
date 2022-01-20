@@ -10,7 +10,6 @@ export const url = `${protocol}${canister}.${host}`;
 
 export default function useDeck (index = 1) {
     const [cards, setCards] = React.useState<Card[]>();
-    const [textures, setTextures] = React.useState<THREE.Texture[]>();
     React.useEffect(() => {
         fetch(`${url}/manifest/${index}`).then(res =>
             res.json() as unknown as Card[]

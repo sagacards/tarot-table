@@ -3,12 +3,21 @@ import { Actor, ActorConfig, ActorSubclass, HttpAgent, HttpAgentOptions } from '
 import { IDL } from '@dfinity/candid';
 import { Principal } from '@dfinity/principal';
 import { StoicIdentity } from 'ic-stoic-identity';
+import { InternetComputerNFTCanister } from '../ic/canisters/chaos-decks/chaos-decks.did';
+// @ts-ignore
+import { idlFactory } from '../ic/canisters/chaos-decks';
 
-const isLocal = window.location.host.includes('localhost');
+// const isLocal = window.location.host.includes('localhost');
+const isLocal = false;
 const host = isLocal ? `http://localhost:8000` : `https://raw.ic0.app`;
+const canisters = {
+    chaos: '6e6eb-piaaa-aaaaj-qal6a-cai'
+};
 const whitelist = [
-    '6e6eb-piaaa-aaaaj-qal6a-cai',
+    canisters.chaos,
 ];
+// 
+(window as any).global = window;
 
 const useStore = create<Store>(set => ({
 
@@ -34,9 +43,8 @@ const useStore = create<Store>(set => ({
                 if (!window?.ic?.plug?.agent) return;
                 if (!window?.ic?.plug?.createActor) return;
                 const agent = await window.ic.plug.agent;
-                if (isLocal) agent.fetchRootKey();
+                // if (isLocal) agent.fetchRootKey();
                 const principal = await agent.getPrincipal();
-                console.log(principal);
                 state.setConnection && state.setConnection({
                     wallet: 'plug',
                     principal: principal,
@@ -46,7 +54,8 @@ const useStore = create<Store>(set => ({
                         canisterId: args.canisterId,
                         interfaceFactory: args.interfaceFactory,
                     });
-                })
+                });
+                state.initActors();
             })
             .catch(e => {
                 console.error('Error connecting plug...');
@@ -70,7 +79,7 @@ const useStore = create<Store>(set => ({
                         identity,
                         host: state.host,
                     });
-                    if (isLocal) agent.fetchRootKey();
+                    // if (isLocal) agent.fetchRootKey();
                     const options : {
                         agentOptions : HttpAgentOptions;
                         actorOptions : ActorConfig;
@@ -86,7 +95,8 @@ const useStore = create<Store>(set => ({
                             ...options?.actorOptions,
                         })
                     ))
-                })
+                });
+                state.initActors();
             })
             .catch(() => {
                 console.error('Error connecting plug');
@@ -103,11 +113,28 @@ const useStore = create<Store>(set => ({
                 function (a) {
                     return new Promise (res => res(undefined));
                 }
-            )
-        })
+            );
+            state.setActors({});
+        });
     },
     newActor () {
         return new Promise (res => res(undefined));
+    },
+    initActors () {
+        set(state => {
+            state.newActor<InternetComputerNFTCanister>({
+                canisterId: canisters.chaos,
+                interfaceFactory: idlFactory,
+            }).then(a => {
+                a && state.setActors({
+                    chaos: a
+                });
+            });
+        });
+    },
+    actors : {},
+    setActors (a) {
+        set(state => ({ actors : a }));
     },
 
     // Wallet setters
@@ -124,9 +151,12 @@ interface Store {
     setConnection?  : (c?: Connection) => void;
     plugConnect     : () => void;
     stoicConnect    : () => void;
+    disconnect      : () => void;
+    actors          : { [key : string] : ActorSubclass<unknown> };
+    setActors       : (a : { [key : string] : ActorSubclass<unknown> }) => void;
     newActor        : ActorFactory;
     setNewActor     : (f: ActorFactory) => void;
-    disconnect      : () => void;
+    initActors      : () => void;
 };
 
 interface Connection {

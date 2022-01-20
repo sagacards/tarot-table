@@ -1,17 +1,21 @@
 import { Leva } from 'leva';
+import useCardStore from './store/cards';
 import Game from './three/game';
 import Aside from './ui/aside';
 import NoMobile from './ui/no-mobile';
+import Reset from './ui/reset';
 import Splash from './ui/splash';
 import Toast from './ui/toast';
 
 function App() {
+    const { reset } = useCardStore();
     return <>
-        <Toast>⚠️ Pre Alpha Release</Toast>
+        <Toast>⚠️ Alpha Release</Toast>
         <Game />
         <Aside />
         <Splash />
         <NoMobile />
+        <Reset reset={reset} />
         <Leva
             flat
             hidden
