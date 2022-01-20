@@ -21,7 +21,7 @@ import useCardStore from '../../store/cards';
 export default function CardsScene (props: GroupProps) {
 
     // Utilize data store.
-    const { deck : _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump } = useCardStore();
+    const { deck : _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump, turn } = useCardStore();
 
     const deck = useDeck(_deck);
     const textures = deck ? useLoader(THREE.TextureLoader, deck.map(x => x.image)) : [];
@@ -105,7 +105,7 @@ export default function CardsScene (props: GroupProps) {
                     key={`card${card.index}`}
                     scale={cardScale}
                     {...springs[i]}
-                    onClick={e => onCardClick(e, card, cards, drawn, draw, renoise, bump, reset)}
+                    onClick={e => onCardClick(e, card, cards, drawn, draw, renoise, bump, reset, turn, drag.current)}
                     materials={<>
                         <meshStandardMaterial attachArray='material' map={textures[78]} />
                         <meshStandardMaterial attachArray='material' color={'#999'} />
@@ -179,7 +179,7 @@ function layoutCard (
             card.tablePosition[1],
             card.tablePosition[2] + cardThickeness * drawn.indexOf(card),
         ] as [number, number, number],
-        rotation: [0, 0, 0] as [number, number, number],
+        rotation: [0, 0, card.turn ? Math.PI / 2 : 0] as [number, number, number],
     };
 };
 
@@ -198,6 +198,8 @@ function onCardClick (
     renoise : () => void,
     bump    : (i : number) => void,
     reset   : () => void,
+    turn    : (i : number) => void,
+    drag    : DragRef,
 ) {
     console.log(event.sourceEvent.type)
     event.stopPropagation();
@@ -209,6 +211,12 @@ function onCardClick (
                 // bump(drawn.length);
                 draw();
                 renoise();
+            } else {
+                if (drag.dragged) {
+                    drag.dragged = false;
+                    return;
+                }
+                turn(cards.indexOf(card));
             }
             break;
         case 'contextmenu':
@@ -278,6 +286,7 @@ export interface Card {
         position: [number, number, number];
         rotation: [number, number, number];
     };
+    turn: boolean;
 };
 
 // An object for tracking drag and drop

@@ -21,6 +21,7 @@ const useCardStore = create<{
     reset: () => void,
     renoise: (all? : false) => void,
     bump: (i: number) => void,
+    turn: (i: number) => void,
     saveImage?: (n : string) => void,
     setSaveImage: (f : (n : string) => void) => void,
 }>(set => ({
@@ -77,6 +78,10 @@ const useCardStore = create<{
             100
         );
     },
+    turn: (i) => set(state => {
+        const cards = state.cards;
+        cards[i].turn = !cards[i].turn;
+    }),
 }));
 
 
@@ -93,6 +98,7 @@ function createDeck (chaos : number) : Card[] {
             index: cards.length,
             tablePosition: initialCardPosition,
             noise: makeNoise(chaos),
+            turn: false,
         });
     }
     return cards;
