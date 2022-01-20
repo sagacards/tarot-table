@@ -83,7 +83,7 @@ export default function CardsScene (props: GroupProps) {
                             (state.mouse.y * state.viewport.height) / 3,
                             .125
                         ],
-                        rotation: dragTilt([0, 0, 0], drag.current),
+                        rotation: dragTilt([0, 0, cards[i].turn ? Math.PI / 2 : 0], drag.current),
                         // config: cardMovementSpringConf
                     };
                 }

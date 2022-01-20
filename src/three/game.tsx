@@ -51,7 +51,7 @@ function RootScene () {
         setSaveImage(saveImage);
     }, []);
     return <>
-        <CardsScene position={[0, 0, 1.5]} />
+        <CardsScene position={[0, 0, 1.51]} />
         <Table />
         <DefaultLightingRig />
         <Skybox />
