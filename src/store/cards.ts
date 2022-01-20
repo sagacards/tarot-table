@@ -21,7 +21,11 @@ const useCardStore = create<{
     reset: () => void,
     renoise: (all? : false) => void,
     bump: (i: number) => void,
+    saveImage?: (n : string) => void,
+    setSaveImage: (f : (n : string) => void) => void,
 }>(set => ({
+    saveImage: undefined,
+    setSaveImage: (f) => set(state => ({ saveImage: f })),
     deck: undefined,
     setDeck: (i) => set(state => ({ deck : i })),
     chaos: globalChaos,

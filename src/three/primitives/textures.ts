@@ -1,6 +1,6 @@
-import { useLoader } from '@react-three/fiber';
 import React from 'react';
 import * as THREE from 'three';
+import useStore from '../../store/main';
 
 const isLocal = false;
 const protocol = isLocal ? 'http://' : 'https://';
@@ -13,7 +13,9 @@ export default function useDeck (index = 1) {
     React.useEffect(() => {
         fetch(`${url}/manifest/${index}`).then(res =>
             res.json() as unknown as Card[]
-        ).then(setCards)
+        ).then(d => {
+            setCards(d);
+        });
     }, [index]);
     return cards;
 }

@@ -29,17 +29,17 @@ export function Loader () {
         mesh.current.rotation.x = Math.sin(state.clock.getElapsedTime());
     });
 
-    return <mesh ref={mesh}>
+    return <mesh ref={mesh} position={[0, 0, .5]}>
         {/* Torus is super imposing for this app. */}
-        {/* <torusGeometry args={[.5, .1, 10, 25]} />
-        <meshStandardMaterial color="#121212" /> */}
+        <torusGeometry args={[.5, .1, 10, 25]} />
+        <meshStandardMaterial color="#fff" />
     </mesh>
 }
 
 // I found that, for some reason, handling suspense in a wrapper fixed some animations.
 export function Suspended (props : { children : React.ReactNode }) {
     return (
-        <React.Suspense fallback={<Loader />}>
+        <React.Suspense fallback={<></>}>
             {props.children}
         </React.Suspense>
     );

@@ -1,4 +1,5 @@
 import { ActorSubclass } from '@dfinity/agent';
+import { useThree } from '@react-three/fiber';
 import React from 'react';
 import { InternetComputerNFTCanister } from '../../ic/canisters/chaos-decks/chaos-decks.did';
 import useCardStore from '../../store/cards';
@@ -8,7 +9,7 @@ import Styles from './styles.module.css';
 
 export default function Aside () {
     const { stoicConnect, plugConnect, connection, disconnect, actors : { chaos } } = useStore();
-    const { setDeck } = useCardStore();
+    const { setDeck, saveImage } = useCardStore();
 
     const [open, setOpen] = React.useState<Boolean>(false);
     const [decks, setDecks] = React.useState<number[]>();
@@ -48,6 +49,9 @@ export default function Aside () {
                         </div>
                     </div>
             }
+            <div className={Styles.section}>
+                <Button onClick={() => {saveImage && saveImage(`Tarot Table Reading (${new Date().toLocaleString()})`)}}>📸 Capture</Button>
+            </div>
         </div>
     </div>
 }

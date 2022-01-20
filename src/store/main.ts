@@ -142,12 +142,18 @@ const useStore = create<Store>(set => ({
     setConnection: (c) => set(state => ({ connection: c })),
     setNewActor: (f) => set(state => ({ newActor: f })),
 
+    // Global loader
+    loading: false,
+    setLoading: (l) => set(state => ({ loading : l }))
+
 }));
 
 interface Store {
     isLocal         : boolean;
     host            : string;
     connection?     : Connection;
+    loading         : boolean;
+    setLoading      : (l : boolean) => void;
     setConnection?  : (c?: Connection) => void;
     plugConnect     : () => void;
     stoicConnect    : () => void;
