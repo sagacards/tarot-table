@@ -6,7 +6,6 @@ import { GroupProps, ThreeEvent, useFrame, useLoader, useThree } from '@react-th
 import { useControls } from 'leva';
 import { animated, useSprings } from '@react-spring/three';
 import { useGesture } from '@use-gesture/react';
-import zustand from 'zustand';
 import BaseCard from '../card';
 import { cardThickeness } from '../primitives/geometry';;
 import useDeck, { url } from '../primitives/textures';
@@ -25,7 +24,7 @@ export default function CardsScene (props: GroupProps) {
     const { deck : _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump } = useCardStore();
 
     const deck = useDeck(_deck);
-    const textures = deck ? useLoader(THREE.TextureLoader, deck.map(x => `${url}${x.image}`)) : [];
+    const textures = deck ? useLoader(THREE.TextureLoader, deck.map(x => x.image)) : [];
 
     // Admin UI things.
     useControls({
