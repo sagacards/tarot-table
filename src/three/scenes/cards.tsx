@@ -123,12 +123,12 @@ export default function CardsScene (props: GroupProps) {
 /////////////////
 
 
-export const cardScale = 0.5;
+export const cardScale = 0.3;
 export const tableMargin = 0.1;
 export const globalChaos = 0.2;
-export const initialCardPosition = [1.2, -1, 0.01] as [number, number, number];
+export const initialCardPosition = [2, -1.5, 0.01] as [number, number, number];
 export const deckLayout = {
-    position: [2.8, -1, 0] as [number, number, number],
+    position: [3, -1.5, 0] as [number, number, number],
     rotation: [0, Math.PI, 0] as [number, number, number],
 };
 
