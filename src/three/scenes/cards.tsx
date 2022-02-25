@@ -167,7 +167,7 @@ function layoutDeck (
 
     // Add noise
     layout.rotation = layout.rotation.map((v: number, i: number) => v + card.noise.rotation[i])
-    layout.position = layout.position.map((v: number, i: number) => v + card.noise.position[i])
+    layout.position = layout.position.map((v: number, i: number) => v + card.shufflePosition[i] + card.noise.position[i])
     
     return layout;
 };
@@ -282,6 +282,7 @@ function bindGestures (
 export interface Card {
     index: number;
     tablePosition: [number, number, number];
+    shufflePosition: [number, number, number];
     noise: {
         position: [number, number, number];
         rotation: [number, number, number];

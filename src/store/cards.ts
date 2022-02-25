@@ -5,6 +5,8 @@ import { tableDimensions } from '../three/table';
 import { cardDimensions } from '../three/primitives/geometry';
 
 
+const deck = shuffle(createDeck(globalChaos));
+
 // TODO: Flipped cards.
 // TODO: Bumping.
 
@@ -32,7 +34,7 @@ const useCardStore = create<{
     setDeck: (i) => set(state => ({ deck : i })),
     chaos: globalChaos,
     setChaos: (chaos) => set(state => ({ chaos })),
-    cards: shuffle(createDeck(globalChaos)),
+    cards: deck,
     updateCard: (i, pos) => set(state => {
         const cards = state.cards;
         const bounds = [
@@ -51,7 +53,7 @@ const useCardStore = create<{
         drawn: [...state.drawn, state.cards[(state.cards.length - 1) - state.drawn.length]],
     })),
     shuffle: () => set(state => ({ cards: shuffle(state.cards) })),
-    reset: () => set(state => ({ drawn: [], cards: shuffle(createDeck(state.chaos)) })),
+    reset: () => set(state => ({ drawn: [], cards: shuffle(resetDeck(state.cards, state.chaos)) })),
     renoise: (all) => set(state => {
         const cards = state.cards;
         for (let i = state.cards.length - 1; i >= 0; i--) {
@@ -102,11 +104,24 @@ function createDeck (chaos : number) : Card[] {
         cards.push({
             index: cards.length,
             tablePosition: initialCardPosition,
+            shufflePosition: [0, 0, 0] as [number, number, number],
             noise: makeNoise(chaos),
             turn: false,
             flip: false,
         });
     }
+    return cards;
+};
+
+// Puts cards back in the deck.
+function resetDeck (deck : Card[], chaos : number) {
+    const cards = deck;
+    for (const card of cards) {
+        card.tablePosition = initialCardPosition;
+        card.noise = makeNoise(chaos);
+        card.turn = false;
+        card.flip = false;
+    };
     return cards;
 };
 
@@ -127,10 +142,13 @@ function makeNoise (chaos : number) {
 };
 
 // A Fisher-Yates shuffle.
-function shuffle<T> (array : T[]) : T[] {
+function shuffle (array : Card[]) : Card[] {
     for (let i = array.length - 1; i >= 0; i--) {
         const randomIndex = Math.floor(Math.random() * array.length);
         const card = array[i];
+        const r = Math.random() > .5;
+        card.shufflePosition = [1.5 * (r ? 1 : -1), 0, 0];
+        setTimeout(() => card.shufflePosition = [0, 0, 0], 300);
         array[i] = array[randomIndex];
         array[randomIndex] = card;
     };
