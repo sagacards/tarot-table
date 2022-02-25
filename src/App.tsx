@@ -9,9 +9,10 @@ import LoadScreen from './screens/load';
 
 function App() {
     const { loadingProgress } = useStore();
+    const isLocal = window.location.host.includes('localhost');
 
     return <>
-        <LoadScreen progress={loadingProgress} />
+        {!isLocal && <LoadScreen progress={loadingProgress} />}
         <Toast>⚠️ Pre-Alpha Release</Toast>
         <NoMobile />
         <BrowserRouter>
