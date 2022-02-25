@@ -1,24 +1,24 @@
+import React from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Leva } from 'leva';
-import useCardStore from './store/cards';
 import useStore from './store/main';
-import Game from './three/game';
-import Aside from './ui/aside';
-import GlobalLoader from './ui/global-loader';
 import NoMobile from './ui/no-mobile';
-import Reset from './ui/reset';
-import Splash from './ui/splash';
 import Toast from './ui/toast';
+import GameScreen from './screens/game';
+import LoadScreen from './screens/load';
 
 function App() {
-    const { reset } = useCardStore();
+    const { loadingProgress } = useStore();
+
     return <>
-        <Toast>⚠️ Alpha Release</Toast>
-        <GlobalLoader />
-        <Game />
-        <Aside />
-        <Splash />
+        <LoadScreen progress={loadingProgress} />
+        <Toast>⚠️ Pre-Alpha Release</Toast>
         <NoMobile />
-        <Reset reset={reset} />
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<GameScreen />} />
+            </Routes>
+        </BrowserRouter>
         <Leva
             flat
             hidden

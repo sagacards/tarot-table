@@ -49,7 +49,9 @@ function RootScene () {
         camera.position.set(0, -1, 5);
         camera.lookAt(0, 0, 0);
         setSaveImage(saveImage);
+        scene.background = null;
     }, []);
+
     return <>
         <CardsScene position={[0, 0, 1.51]} />
         <Table />

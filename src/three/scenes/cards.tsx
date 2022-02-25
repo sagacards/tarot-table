@@ -7,10 +7,9 @@ import { useControls } from 'leva';
 import { animated, useSprings } from '@react-spring/three';
 import { useGesture } from '@use-gesture/react';
 import BaseCard from '../card';
-import { cardThickeness } from '../primitives/geometry';;
-import useDeck, { url } from '../primitives/textures';
+import { cardThickeness } from '../primitives/geometry';
+import useDeck from '../primitives/textures';
 import useCardStore from '../../store/cards';
-import { functionalUpdate } from 'react-query/types/core/utils';
 
 
 
@@ -24,8 +23,8 @@ export default function CardsScene (props: GroupProps) {
     // Utilize data store.
     const { deck : _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump, turn, flip } = useCardStore();
 
+    // I load my textures here... which means that this whole scene will suspend 🤔. I wonder why it flickers though.
     const deck = useDeck(_deck);
-    const textures = deck ? useLoader(THREE.TextureLoader, deck.map(x => x.image)) : [];
 
     // Admin UI things.
     useControls({
@@ -94,13 +93,19 @@ export default function CardsScene (props: GroupProps) {
 
     // TODO: Cards should be an instanced mesh. I need to learn how to use instanced mesh first.
 
+    const gestureBindings : any[] = [];
+    cards.forEach((_, i) => {
+        gestureBindings.push(bindGestures(drag.current, (x, y) => updateCard(i, mouseToWorld(x, y, camera)))(i));
+    });
+
+    if (!deck.length) return <></>
     return <group {...props}>
         {cards.map((card, i) => {
             // @ts-ignore: spring / gesture interop
             return <animated.group
                 key={`keygroup${i}`}
                 name={`keygroup${i}`}
-                {...bindGestures(drag.current, (x, y) => updateCard(i, mouseToWorld(x, y, camera)))(i)}
+                {...gestureBindings[i]}
             >
                 <BaseCard
                     key={`card${card.index}`}
@@ -108,9 +113,9 @@ export default function CardsScene (props: GroupProps) {
                     {...springs[i]}
                     onClick={e => onCardClick(e, card, cards, drawn, draw, renoise, bump, reset, turn, drag.current, flip)}
                     materials={<>
-                        <meshStandardMaterial attachArray='material' map={textures[78]} />
+                        <meshStandardMaterial attachArray='material' map={deck[78].texture} />
                         <meshStandardMaterial attachArray='material' color={'#999'} />
-                        <meshStandardMaterial attachArray='material' map={textures[card.index]} />
+                        <meshStandardMaterial attachArray='material' map={deck[card.index].texture} />
                     </>}
                 />
             </animated.group>

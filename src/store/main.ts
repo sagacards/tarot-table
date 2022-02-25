@@ -144,7 +144,9 @@ const useStore = create<Store>(set => ({
 
     // Global loader
     loading: false,
-    setLoading: (l) => set(state => ({ loading : l }))
+    setLoading: (l) => set(state => ({ loading : l })),
+    loadingProgress : 0,
+    setLoadingProgress : (p) => set(state => ({ loadingProgress : p })),
 
 }));
 
@@ -154,6 +156,8 @@ interface Store {
     connection?     : Connection;
     loading         : boolean;
     setLoading      : (l : boolean) => void;
+    loadingProgress : number,
+    setLoadingProgress: (p : number) => void;
     setConnection?  : (c?: Connection) => void;
     plugConnect     : () => void;
     stoicConnect    : () => void;

@@ -1,6 +1,6 @@
 .root {
-    position: fixed;
-    top: 0; right: 0; bottom: 0; left: 0;
+    /* position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0; */
 
     display: flex;
     flex-direction: column;
@@ -8,7 +8,42 @@
     justify-content: center;
 }
 
+.logo {
+    max-width: 400px;
+    max-height: 400px;
+    animation: fadeIn 1000ms ease-out;
+}
+
 .title {
     font-family: 'Uncial Antiqua';
     font-size: 72px;
+    height: 100px;
+    margin: 0;
+}
+
+.titleGroup {
+    position: relative;
+    opacity: 0;
+    animation: fadeIn 1000ms 250ms ease-out;
+    animation-fill-mode: forwards;
+}
+
+.titleTag {
+    position: absolute;
+    bottom: 0em;
+    right: 5%;
+    background: rgba(0, 0, 0, .8);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .5);
+    border-radius: 15px;
+    display: flex;
+    padding: .5em 1em;
+    text-transform: uppercase;
+    font-weight: 500;
+    font-size: .8em;
+    transform: rotate(-5deg);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }

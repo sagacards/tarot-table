@@ -1,4 +1,5 @@
 import React from 'react';
+import useStore from 'src/store/main';
 import * as THREE from 'three';
 
 const isLocal = false;
@@ -7,32 +8,61 @@ const host = isLocal ? 'localhost:8000' : 'raw.ic0.app';
 const canister = '6e6eb-piaaa-aaaaj-qal6a-cai';
 export const url = `${protocol}${canister}.${host}`;
 
+export const loader = new THREE.TextureLoader();
+export const textures : THREE.Texture[] = [];
+
+export function loadDeck (cardURIs : string[]) {
+    const promises : Promise<THREE.Texture>[] = [];
+    let i = 0;
+    for (const uri of cardURIs) {
+        promises.push(
+            new Promise((resolve) => {
+                textures[i] = loader.load(uri, resolve);
+            })
+        );
+        i++;
+    }
+    return promises;
+}
+
+export function loadProgress<T>(promises : Promise<T>[], callback : (percent : number) => void) {
+    let d = 0;
+    callback(0);
+    for (const p of promises) {
+      p.then(()=> {    
+        d ++;
+        callback( (d * 100) / promises.length );
+      });
+    }
+    return Promise.all(promises);
+}
+
 export default function useDeck (index?: number ) {
     const [cards, setCards] = React.useState<Card[]>([]);
+    const { setLoading, setLoadingProgress } = useStore();
     React.useEffect(() => {
-        if (index) {
-            fetch(`${url}/manifest/${index}`).then(res =>
-                res.json() as unknown as Card[]
-            ).then(d => {
-                setCards(d.map(x => ({
-                    name: x.name,
-                    suit: x.suit,
-                    number: x.number,
-                    index: x.index,
-                    image: `${url}${x.image}`,
-                })));
-            });
-        } else {
-            useRWS().then(d => {
-                setCards(d.map((c, i) => ({
-                    name: '',
-                    suit: 'trump',
-                    number: 0,
-                    image: c,
-                    index: i,
-                })))
-            })
-        }
+        setLoading(true);
+        const rws = useRWS();
+        const deck : Promise<string[]> = index
+            ? fetch(`${url}/manifest/${index}`)
+                .then(res => res.json())
+                .then(x => x.map((y: any) => `${url}/${y.image}`))
+            : rws;
+        deck
+        .then(d => {
+            return loadProgress<THREE.Texture>(loadDeck(d), setLoadingProgress)
+        })
+        .then(d => {
+            setLoading(false);
+            setCards(d.map((c, i) => ({
+                name: '',
+                suit: 'trump',
+                number: 0,
+                index: i,
+                image: '',
+                texture: textures[i],
+            })))
+        })
     }, [index]);
     return cards;
 }
@@ -51,4 +81,5 @@ interface Card {
     suit    : 'trump' | 'wands' | 'swords' | 'cups' | 'pentacles';
     name    : string;
     image   : string;
+    texture : THREE.Texture;
 };

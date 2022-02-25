@@ -1,0 +1,53 @@
+.root {
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 1000;
+
+    height: 100%;
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+
+    opacity: 1;
+    transition: opacity 500ms ease-in;
+    background: black;
+}
+
+.done {
+    opacity: 0;
+}
+
+.hide {
+    display: none;
+}
+
+.load {
+    width: 90%;
+    max-width: 800px;
+    height: 10px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    width: 100%;
+    background: rgba(255, 255, 255, .3);
+    box-shadow: 0 0 0 1px inset rgba(255, 255, 255, .4);
+    border-radius: 4px;
+    transition: transform 3s linear;
+}
+
+.message {
+    height: 50px;
+    opacity: 0;
+    transition: opacity 250ms ease-out;
+}
+
+.messageShow {
+    opacity: 1;
+}

@@ -4,6 +4,7 @@ import useStore from '../../store/main';
 
 export default function GlobalLoader () {
     const { loading } = useStore();
+
     return <>
         {loading && <div className={Styles.root}>
             <div className={Styles.spinner}>Loading...</div>
