@@ -68,18 +68,18 @@ export default function Card ({
     const springProps = useSpring({
         ref: spring,
         opacity: 0,
-        position: [0, -0.5, 0],
+        position: [0, 0, 0],
         config: cardSpringConf
     });
 
     // Loading animation when component mounts
-    React.useEffect(() => {
-        spring.start({
-            from: { opacity: 0, position: [0, -0.5, 0] },
-            to: { opacity: 1, position: [0, 0, 0] },
-            config: cardSpringConf
-        });
-    }, [spring]);
+    // React.useEffect(() => {
+    //     spring.start({
+    //         from: { opacity: 0, position: [0, -0.5, 0] },
+    //         to: { opacity: 1, position: [0, 0, 0] },
+    //         config: cardSpringConf
+    //     });
+    // }, [spring]);
 
     return <Suspended>
         {/* @ts-ignore: react spring makes typescript complain about its animated values */}
