@@ -10,6 +10,7 @@ import BaseCard from '../card';
 import { cardThickeness } from '../primitives/geometry';
 import useDeck from '../primitives/textures';
 import useCardStore from '../../store/cards';
+import { Text } from '@react-three/drei';
 
 
 
@@ -27,7 +28,7 @@ export default function CardsScene (props: GroupProps) {
     const deck = useDeck(_deck);
 
     // Admin UI things.
-    useControls({
+    const { debug } = useControls({
         chaos: {
             value: globalChaos,
             step: .1,
@@ -37,7 +38,8 @@ export default function CardsScene (props: GroupProps) {
                 setChaos(v)
                 renoise(v)
             }
-        }
+        },
+        debug: false,
     });
 
     // Setup animation springs.
@@ -116,6 +118,7 @@ export default function CardsScene (props: GroupProps) {
                         <meshStandardMaterial attachArray='material' map={deck[78].texture} />
                         <meshStandardMaterial attachArray='material' color={'#999'} />
                         <meshStandardMaterial attachArray='material' map={deck[card.index].texture} />
+                        {debug && <group position={[0, 0, -.01]} rotation={[0, Math.PI, 0]}><Text scale={[20, 20, 20]} color={'#AA2288'}>{card.index}</Text></group>}
                     </>}
                 />
             </animated.group>
@@ -281,6 +284,7 @@ function bindGestures (
 
 export interface Card {
     index: number;
+    order: number;
     tablePosition: [number, number, number];
     shufflePosition: [number, number, number];
     noise: {

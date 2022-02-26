@@ -52,8 +52,8 @@ const useCardStore = create<{
     draw: () => set(state => ({
         drawn: [...state.drawn, state.cards[(state.cards.length - 1) - state.drawn.length]],
     })),
-    shuffle: () => set(state => ({ cards: shuffle(state.cards) })),
-    reset: () => set(state => ({ drawn: [], cards: shuffle(resetDeck(state.cards, state.chaos)) })),
+    shuffle: () => set(state => ({ cards: shuffleLayout(shuffle(state.cards)) })),
+    reset: () => set(state => ({ drawn: [], cards: shuffleLayout(shuffle(resetDeck(state.cards, state.chaos))) })),
     renoise: (all) => set(state => {
         const cards = state.cards;
         for (let i = state.cards.length - 1; i >= 0; i--) {
@@ -103,6 +103,7 @@ function createDeck (chaos : number) : Card[] {
     while (cards.length < 78) {
         cards.push({
             index: cards.length,
+            order: cards.length,
             tablePosition: initialCardPosition,
             shufflePosition: [0, 0, 0] as [number, number, number],
             noise: makeNoise(chaos),
@@ -115,14 +116,13 @@ function createDeck (chaos : number) : Card[] {
 
 // Puts cards back in the deck.
 function resetDeck (deck : Card[], chaos : number) {
-    const cards = deck;
-    for (const card of cards) {
+    for (const card of deck) {
         card.tablePosition = initialCardPosition;
         card.noise = makeNoise(chaos);
         card.turn = false;
         card.flip = false;
     };
-    return cards;
+    return deck;
 };
 
 // Adds minor variation to card properies for a more natural feeling.
@@ -141,18 +141,50 @@ function makeNoise (chaos : number) {
     };
 };
 
-// A Fisher-Yates shuffle.
+// Fisher-Yates shuffled with some layout values.
 function shuffle (array : Card[]) : Card[] {
-    for (let i = array.length - 1; i >= 0; i--) {
-        const randomIndex = Math.floor(Math.random() * array.length);
+
+    for (let i = 0; i < array.length; i++) {
         const card = array[i];
-        const r = Math.random() > .5;
-        card.shufflePosition = [1.5 * (r ? 1 : -1), 0, 0];
-        setTimeout(() => card.shufflePosition = [0, 0, 0], 300);
-        array[i] = array[randomIndex];
-        array[randomIndex] = card;
+        const newIndex = Math.floor(Math.random() * array.length);
+        const temp = array[newIndex];
+        card.order = newIndex;
+        temp.order = i;
     };
+
+    array.sort((a, b) => b.order - a.order);
+
     return array;
 }
+
+function shuffleLayout (array : Card[]) {
+    // Delay between moving each card.
+    const delay = 5;
+
+    // Move each card into its pile
+    for (let i = 0; i < array.length; i++) {
+        const card = array[i];
+        setTimeout(() => {
+            card.shufflePosition = [1 * (Math.random() > .5 ? 1 : -1), 0, 0];
+        }, i * delay);
+    };
+
+    // Move each card into its new order
+    for (let i = 0; i < array.length; i++) {
+        setTimeout(() => {
+            array.sort((a, b) => b.order - a.order);
+
+            // Move each card into the pile
+            for (let i = 0; i < array.length; i++) {
+                const card = array[i];
+                setTimeout(() => {
+                    card.shufflePosition = [0, 0, 0];
+                }, i * delay + delay * array.length * 2);
+            };
+        }, array.length * delay);
+    }
+
+    return array;
+};
 
 export default useCardStore;

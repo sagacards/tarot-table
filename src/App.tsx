@@ -22,7 +22,8 @@ function App() {
         </BrowserRouter>
         <Leva
             flat
-            hidden
+            hidden={!isLocal}
+            collapsed
         />
     </>
 }
