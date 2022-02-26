@@ -179,7 +179,7 @@ function shuffleLayout (array : Card[]) {
                 const card = array[i];
                 setTimeout(() => {
                     card.shufflePosition = [0, 0, 0];
-                }, i * delay + delay * array.length * 2);
+                }, i * delay);
             };
         }, array.length * delay);
     }
