@@ -6,6 +6,7 @@ import NoMobile from './ui/no-mobile';
 import Toast from './ui/toast';
 import GameScreen from './screens/game';
 import LoadScreen from './screens/load';
+import SplashScreen from './screens/splash';
 
 function App() {
     const { loadingProgress } = useStore();
@@ -13,10 +14,11 @@ function App() {
 
     return <>
         {!isLocal && <LoadScreen progress={loadingProgress} />}
-        <Toast>⚠️ Pre-Alpha Release</Toast>
+        <Toast>⚠️ Hackathon Release</Toast>
         <NoMobile />
         <BrowserRouter>
             <Routes>
+                <Route path="/splash" element={<SplashScreen />} />
                 <Route path="/" element={<GameScreen />} />
             </Routes>
         </BrowserRouter>

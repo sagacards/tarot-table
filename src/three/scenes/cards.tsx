@@ -19,10 +19,10 @@ import { Text } from '@react-three/drei';
 ///////////////////
 
 
-export default function CardsScene (props: GroupProps) {
+export default function CardsScene(props: GroupProps) {
 
     // Utilize data store.
-    const { deck : _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump, turn, flip } = useCardStore();
+    const { deck: _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump, turn, flip, hasFocus } = useCardStore();
 
     // I load my textures here... which means that this whole scene will suspend 🤔. I wonder why it flickers though.
     const deck = useDeck(_deck);
@@ -55,7 +55,7 @@ export default function CardsScene (props: GroupProps) {
     // Refs.
     const drag = newDragRef();
     const mouse = newMouseRef();
-    
+
     const { camera } = useThree();
 
     // Imperative animation loop
@@ -68,7 +68,9 @@ export default function CardsScene (props: GroupProps) {
         // Interpolate standard card positions
         springApi.start(i => {
             const card = cards[i];
-            if (drawn.includes(card)) {
+            if (hasFocus && hasFocus.index === i) {
+                return layoutFocus(card)
+            } else if (drawn.includes(card)) {
                 return layoutCard(card, cards, drawn, chaos);
             } else {
                 return layoutDeck(card, cards, drawn, chaos);
@@ -95,9 +97,9 @@ export default function CardsScene (props: GroupProps) {
 
     // TODO: Cards should be an instanced mesh. I need to learn how to use instanced mesh first.
 
-    const gestureBindings : any[] = [];
-    cards.forEach((_, i) => {
-        gestureBindings.push(bindGestures(drag.current, (x, y) => updateCard(i, mouseToWorld(x, y, camera)))(i));
+    const gestureBindings: any[] = [];
+    cards.forEach(({ index }, i) => {
+        gestureBindings.push(bindGestures(drag.current, (x, y) => updateCard(i, mouseToWorld(x, y, camera)))(i, index));
     });
 
     if (!deck.length) return <></>
@@ -113,7 +115,6 @@ export default function CardsScene (props: GroupProps) {
                     key={`card${card.index}`}
                     scale={cardScale}
                     {...springs[i]}
-                    onClick={e => onCardClick(e, card, cards, drawn, draw, renoise, bump, reset, turn, drag.current, flip)}
                     materials={<>
                         <meshStandardMaterial attachArray='material' map={deck[78].texture} />
                         <meshStandardMaterial attachArray='material' color={'#999'} />
@@ -148,11 +149,11 @@ export const deckLayout = {
 
 
 // Display cards in a tidy-ish deck
-function layoutDeck (
-    card : Card,
-    cards : Card[],
-    drawn : Card[],
-    chaos : number = .1
+function layoutDeck(
+    card: Card,
+    cards: Card[],
+    drawn: Card[],
+    chaos: number = .1
 ) {
     const index = cards.indexOf(card);
 
@@ -171,16 +172,16 @@ function layoutDeck (
     // Add noise
     layout.rotation = layout.rotation.map((v: number, i: number) => v + card.noise.rotation[i])
     layout.position = layout.position.map((v: number, i: number) => v + card.shufflePosition[i] + card.noise.position[i])
-    
+
     return layout;
 };
 
 // Display drawn cards
-function layoutCard (
-    card : Card,
-    cards : Card[],
-    drawn : Card[],
-    chaos : number = .1
+function layoutCard(
+    card: Card,
+    cards: Card[],
+    drawn: Card[],
+    chaos: number = .1
 ) {
     return {
         position: [
@@ -192,26 +193,40 @@ function layoutCard (
     };
 };
 
+// Display focused card
+function layoutFocus(
+    card: Card,
+) {
+    return {
+        position: [
+            0,
+            -.5,
+            2.25,
+        ] as [number, number, number],
+        rotation: [Math.PI * .05, 0, 0] as [number, number, number],
+    };
+};
+
 
 ///////////////////////
 // Gesture Handlers //
 /////////////////////
 
 
-function onCardClick (
-    event   : ThreeEvent<MouseEvent>,
-    card    : Card,
-    cards   : Card[],
-    drawn   : Card[],
-    draw    : () => void,
-    renoise : () => void,
-    bump    : (i : number) => void,
-    reset   : () => void,
-    turn    : (i : number) => void,
-    drag    : DragRef,
-    flip    : (i : number) => void,
+function onCardClick(
+    event: ThreeEvent<MouseEvent> | undefined,
+    card: Card,
+    cards: Card[],
+    drawn: Card[],
+    draw: () => void,
+    renoise: () => void,
+    bump: (i: number) => void,
+    reset: () => void,
+    turn: (i: number) => void,
+    drag: DragRef,
+    flip: (i: number) => void,
 ) {
-    event.stopPropagation();
+    event?.stopPropagation();
     const isDrawn = drawn.includes(card);
     if (!isDrawn) {
         draw();
@@ -230,10 +245,11 @@ function onCardClick (
     }
 };
 
-function bindGestures (
-    dragRef : DragRef,
-    drop : (x: number, y: number) => void,
+function bindGestures(
+    dragRef: DragRef,
+    drop: (x: number, y: number) => void,
 ) {
+    const { deck: _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump, turn, flip, hasFocus, focus } = useCardStore();
     return useGesture(
         {
             // Capture mouse pos and velocity while dragging
@@ -264,6 +280,24 @@ function bindGestures (
                 dragRef.dragging = false;
                 dragRef.i = undefined;
             },
+            // Show a card in detail on right click
+            onContextMenu({ event, args: [i, index] }) {
+                event?.stopPropagation()
+                const card = cards[i]
+                if (!card.flip) return;
+                if (hasFocus?.index === i) {
+                    focus(undefined)
+                } else {
+                    focus(i)
+                }
+            },
+            onClick({ event, args: [i] }) {
+                event.stopPropagation()
+                const card = cards[i]
+                onCardClick(
+                    undefined, card, cards, drawn, draw, renoise, bump, reset, turn, dragRef, flip
+                )
+            }
         },
         {
             drag: {
@@ -328,7 +362,7 @@ interface MouseRef {
 //////////
 
 // Create a react drag ref
-function newDragRef () {
+function newDragRef() {
     return React.useRef<DragRef>({
         x: 0,
         y: 0,
@@ -343,7 +377,7 @@ function newDragRef () {
 };
 
 // Create a react mosue ref
-function newMouseRef () {
+function newMouseRef() {
     return React.useRef<MouseRef>({
         hoverPosition: { x: 0, y: 0 },
         position: { x: 0, y: 0 },
@@ -377,11 +411,11 @@ function dragTilt(
 // Transform mouse coordinates into world coordinates
 const vec = new THREE.Vector3(); // create once and reuse
 const pos = new THREE.Vector3(); // create once and reuse
-function mouseToWorld (x : number, y : number, camera : THREE.Camera) {
+function mouseToWorld(x: number, y: number, camera: THREE.Camera) {
 
     vec.set(
-        ( x / window.innerWidth ) * 2 - 1,
-        - ( y / window.innerHeight ) * 2 + 1,
+        (x / window.innerWidth) * 2 - 1,
+        - (y / window.innerHeight) * 2 + 1,
         0.5
     );
     vec.unproject(camera);

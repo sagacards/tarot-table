@@ -1,6 +1,7 @@
 .root {
     position: fixed;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     z-index: 1000;
 
     height: 100%;
@@ -28,7 +29,7 @@
     width: 90%;
     max-width: 800px;
     height: 10px;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, .2);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
     border-radius: 4px;
     overflow: hidden;
 }
@@ -36,8 +37,9 @@
 .bar {
     height: 100%;
     width: 100%;
-    background: rgba(255, 255, 255, .3);
-    box-shadow: 0 0 0 1px inset rgba(255, 255, 255, .4);
+    min-width: 20px;
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 1px inset rgba(255, 255, 255, 0.4);
     border-radius: 4px;
     transition: transform 3s linear;
 }
