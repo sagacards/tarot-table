@@ -60,9 +60,8 @@ const useCardStore = create<{
     draw: () => {
         const { cards, drawn } = get();
         const i: number = cards.length - 1 - drawn.length;
-        const card = cards[i];
         set(state => ({
-            drawn: [...state.drawn, card],
+            drawn: [...state.drawn, cards[i]],
         }));
         return i;
     },

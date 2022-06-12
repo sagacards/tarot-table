@@ -89,7 +89,7 @@ export default function CardsScene(props: GroupProps) {
 
     const gestureBindings: any[] = [];
     cards.forEach((_, i) => {
-        gestureBindings.push(bindGestures(drag.current, (x, y) => updateCard(i, mouseToWorld(x, y, camera)))(i));
+        gestureBindings.push(bindGestures(drag.current, (x, y, i) => updateCard(i, mouseToWorld(x, y, camera)))(i));
     });
 
     if (!deck.length) return <></>
@@ -206,12 +206,12 @@ function layoutDragged(
     drag: DragRef,
     hasFocus?: number,
 ) {
-    const isDrag = hasFocus === i;
-    const { position, rotation } = isDrag ? layoutFocus(card) : {
-        position: [0, 0, .125] as [number, number, number],
+    const isFocus = hasFocus === i;
+    const { position, rotation } = isFocus ? layoutFocus(card) : {
+        position: [0, 0, (drag.z || 0) + .05] as [number, number, number],
         rotation: [0, card.flip ? 0 : Math.PI, card.turn ? Math.PI / 2 : 0] as [number, number, number]
     };
-    const factor = isDrag ? .1 : 1
+    const factor = isFocus ? .1 : 1
     return {
         position: [
             position[0] + (mouse.x * viewport.width) / 3 * factor,
@@ -265,7 +265,7 @@ function onCardClick(
 
 function bindGestures(
     dragRef: DragRef,
-    drop: (x: number, y: number) => void,
+    drop: (x: number, y: number, i: number) => void,
 ) {
     const { deck: _deck, cards, drawn, draw, reset, renoise, bump, turn, flip, hasFocus, focus } = useCardStore();
     return useGesture(
@@ -291,6 +291,7 @@ function bindGestures(
                 if (!drawn.includes(cards[i])) {
                     const card = draw()
                     dragRef.i = card;
+                    dragRef.z = cardThickeness * card;
                 } else {
                     dragRef.i = i;
                 }
@@ -299,9 +300,10 @@ function bindGestures(
             },
             // Track an object being dropped
             onDragEnd({ xy: [x, y], args: [i] }) {
-                if (hasFocus !== i) drop(x, y);
+                if (hasFocus !== i) drop(x, y, dragRef.i as number);
                 dragRef.dragging = false;
                 dragRef.i = undefined;
+                dragRef.z = undefined;
             },
             // Show a card in detail on right click
             onContextMenu({ event, args: [i] }) {
@@ -354,6 +356,7 @@ export interface Card {
 interface DragRef {
     x: number;
     y: number;
+    z?: number;
     vX: number; // velocity in px / ms
     vY: number; // velocity in px / ms
     dX: number; // direction
