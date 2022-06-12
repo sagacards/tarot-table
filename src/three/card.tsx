@@ -20,7 +20,7 @@ const Timeout = React.lazy(() => {
 });
 
 // 
-export function Loader () {
+export function Loader() {
     const mesh = React.useRef<THREE.Mesh>(null);
 
     useFrame(state => {
@@ -37,7 +37,7 @@ export function Loader () {
 }
 
 // I found that, for some reason, handling suspense in a wrapper fixed some animations.
-export function Suspended (props : { children : React.ReactNode }) {
+export function Suspended(props: { children: React.ReactNode }) {
     return (
         <React.Suspense fallback={<></>}>
             {props.children}
@@ -53,12 +53,12 @@ interface CardProps extends GroupProps {
     materials?: React.ReactNode;
 }
 
-export default function Card ({
+export default function Card({
     onPointerEnter,
     onPointerLeave,
     materials,
     ...props
-} : CardProps) {
+}: CardProps) {
 
     const mesh = React.useRef<THREE.Mesh>();
     const spring = useSpringRef();
@@ -73,6 +73,7 @@ export default function Card ({
     });
 
     // Loading animation when component mounts
+    // Disable because it messed with shuffling
     // React.useEffect(() => {
     //     spring.start({
     //         from: { opacity: 0, position: [0, -0.5, 0] },

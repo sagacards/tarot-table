@@ -8,8 +8,9 @@ import DefaultLightingRig from './primitives/lights';
 import Table from './table';
 import CardsScene from './scenes/cards';
 import useCardStore from '../store/cards';
+import Overlay from './overlay';
 
-export default function Game () {
+export default function Game() {
     return <div className={Styles.root}>
         <Canvas dpr={window.devicePixelRatio}>
             <React.Suspense fallback={<></>}>
@@ -19,12 +20,12 @@ export default function Game () {
     </div>
 };
 
-function RootScene () {
+function RootScene() {
     const { controls } = useControls({
         controls: false,
     })
     const { gl, scene, camera } = useThree();
-    const { setSaveImage } = useCardStore();
+    const { setSaveImage, hasFocus, focus } = useCardStore();
 
     async function saveImage(name: string) {
         gl.domElement.getContext('webgl', { preserveDrawingBuffer: true });
@@ -42,7 +43,7 @@ function RootScene () {
             1.0
         )
         gl.domElement.getContext('webgl', { preserveDrawingBuffer: false });
-        
+
     }
 
     React.useEffect(() => {
@@ -54,6 +55,7 @@ function RootScene () {
 
     return <>
         <CardsScene position={[0, 0, 1.51]} />
+        {hasFocus && <Overlay onPointerDown={() => focus(undefined)} />}
         <Table />
         <DefaultLightingRig />
         <Skybox />
@@ -61,7 +63,7 @@ function RootScene () {
     </>
 };
 
-function Skybox () {
+function Skybox() {
     return <mesh>
         <sphereGeometry args={[100,]} />
         <meshStandardMaterial color={'#333'} side={THREE.BackSide} />

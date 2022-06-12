@@ -12,9 +12,6 @@ import { cardDimensions } from '../three/primitives/geometry';
 
 const deck = shuffle(createDeck(globalChaos));
 
-// TODO: Flipped cards.
-// TODO: Bumping.
-
 const useCardStore = create<{
     deck?: number;
     setDeck: (i: number) => void;
@@ -23,8 +20,8 @@ const useCardStore = create<{
     cards: Card[];
     updateCard: (i: number, tablePosition: Card['tablePosition']) => void;
     drawn: Card[];
-    hasFocus?: Card;
-    draw: () => void;
+    hasFocus?: number;
+    draw: () => number;
     shuffle: () => void;
     reset: () => void;
     renoise: (all?: false) => void;
@@ -34,7 +31,7 @@ const useCardStore = create<{
     focus: (i?: number) => void;
     saveImage?: (n: string) => void;
     setSaveImage: (f: (n: string) => void) => void;
-}>(set => ({
+}>((set, get) => ({
     saveImage: undefined,
     setSaveImage: f => set(state => ({ saveImage: f })),
     deck: undefined,
@@ -44,7 +41,6 @@ const useCardStore = create<{
     cards: deck,
     updateCard: (i, pos) =>
         set(state => {
-            const cards = state.cards;
             const bounds = [
                 tableDimensions[0] / 2 -
                     (cardDimensions[0] * cardScale) / 2 -
@@ -53,26 +49,29 @@ const useCardStore = create<{
                     (cardDimensions[1] * cardScale) / 2 -
                     tableMargin,
             ];
-            cards[i].tablePosition = [
+            state.cards[i].tablePosition = [
                 THREE.MathUtils.clamp(pos[0], -bounds[0], bounds[0]),
                 THREE.MathUtils.clamp(pos[1], -bounds[1], bounds[1]),
                 pos[2],
             ];
-            return { cards };
+            return { cards: state.cards };
         }),
     drawn: [],
-    draw: () =>
+    draw: () => {
+        const { cards, drawn } = get();
+        const i: number = cards.length - 1 - drawn.length;
+        const card = cards[i];
         set(state => ({
-            drawn: [
-                ...state.drawn,
-                state.cards[state.cards.length - 1 - state.drawn.length],
-            ],
-        })),
+            drawn: [...state.drawn, card],
+        }));
+        return i;
+    },
     shuffle: () =>
         set(state => ({ cards: shuffleLayout(shuffle(state.cards)) })),
     reset: () =>
         set(state => ({
             drawn: [],
+            hasFocus: undefined,
             cards: shuffleLayout(shuffle(resetDeck(state.cards, state.chaos))),
         })),
     renoise: all =>
@@ -83,9 +82,7 @@ const useCardStore = create<{
                     cards[i].noise = makeNoise(state.chaos);
                 }
             }
-            return {
-                cards: cards,
-            };
+            return { cards };
         }),
     bump: i => {
         let prev: number;
@@ -93,6 +90,7 @@ const useCardStore = create<{
             const cards = state.cards;
             prev = cards[i].tablePosition[2];
             cards[i].tablePosition[2] = prev + 1;
+            return { cards };
         });
         setTimeout(
             () =>
@@ -107,17 +105,18 @@ const useCardStore = create<{
         set(state => {
             const cards = state.cards;
             cards[i].turn = !cards[i].turn;
+            return { cards };
         }),
     flip: i =>
         set(state => {
             const cards = state.cards;
             cards[i].flip = !cards[i].flip;
+            return { cards };
         }),
     focus: i =>
         set(state => {
             return {
-                hasFocus:
-                    i !== undefined ? state.cards.find(x => x.index === i) : i,
+                hasFocus: i,
             };
         }),
 }));
@@ -171,16 +170,17 @@ function makeNoise(chaos: number) {
 }
 
 // Fisher-Yates shuffled with some layout values.
-function shuffle(array: Card[]): Card[] {
-    for (let i = 0; i < array.length; i++) {
-        const card = array[i];
-        const newIndex = Math.floor(Math.random() * array.length);
-        const temp = array[newIndex];
-        card.order = newIndex;
-        temp.order = i;
-    }
+function shuffle(array: Card[]) {
+    let n = array.length,
+        t,
+        i;
 
-    array.sort((a, b) => b.order - a.order);
+    while (n) {
+        i = Math.floor(Math.random() * n--);
+        t = array[n];
+        array[n] = array[i];
+        array[i] = t;
+    }
 
     return array;
 }
@@ -200,8 +200,6 @@ function shuffleLayout(array: Card[]) {
     // Move each card into its new order
     for (let i = 0; i < array.length; i++) {
         setTimeout(() => {
-            array.sort((a, b) => b.order - a.order);
-
             // Move each card into the pile
             for (let i = 0; i < array.length; i++) {
                 const card = array[i];

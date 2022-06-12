@@ -2,7 +2,7 @@ import React from 'react';
 import * as THREE from 'three';
 // @ts-ignore
 import structuredClone from '@ungap/structured-clone';
-import { GroupProps, ThreeEvent, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { GroupProps, Size, ThreeEvent, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { useControls } from 'leva';
 import { animated, useSprings } from '@react-spring/three';
 import { useGesture } from '@use-gesture/react';
@@ -44,11 +44,10 @@ export default function CardsScene(props: GroupProps) {
 
     // Setup animation springs.
     const [springs, springApi] = useSprings(cards.length, i => {
-        const card = cards[i];
-        if (drawn.includes(card)) {
-            return layoutCard(card, cards, drawn, chaos);
+        if (drawn.includes(cards[i])) {
+            return layoutCard(cards[i], cards, drawn, chaos);
         } else {
-            return layoutDeck(card, cards, drawn, chaos);
+            return layoutDeck(cards[i], cards, drawn, chaos);
         }
     });
 
@@ -66,30 +65,21 @@ export default function CardsScene(props: GroupProps) {
         mouse.current.position.y = state.mouse.y;
 
         // Interpolate standard card positions
-        springApi.start(i => {
-            const card = cards[i];
-            if (hasFocus && hasFocus.index === i) {
-                return layoutFocus(card)
-            } else if (drawn.includes(card)) {
-                return layoutCard(card, cards, drawn, chaos);
+        springApi.start((i: number) => {
+            if (hasFocus === i) {
+                return layoutFocus(cards[i])
+            } else if (drawn.includes(cards[i])) {
+                return layoutCard(cards[i], cards, drawn, chaos);
             } else {
-                return layoutDeck(card, cards, drawn, chaos);
+                return layoutDeck(cards[i], cards, drawn, chaos);
             }
         })
 
         // Make an object being dragged follow the mouse
         if (drag.current.dragging) {
-            springApi.start((i) => {
+            springApi.start((i: number) => {
                 if (i === drag.current.i) {
-                    return {
-                        position: [
-                            (state.mouse.x * state.viewport.width) / 3,
-                            (state.mouse.y * state.viewport.height) / 3,
-                            .125
-                        ],
-                        rotation: dragTilt([0, cards[i].flip ? 0 : Math.PI, cards[i].turn ? Math.PI / 2 : 0], drag.current),
-                        // config: cardMovementSpringConf
-                    };
+                    return layoutDragged(i, state.mouse, state.viewport, cards[i], drag.current, hasFocus);
                 }
             });
         }
@@ -98,8 +88,8 @@ export default function CardsScene(props: GroupProps) {
     // TODO: Cards should be an instanced mesh. I need to learn how to use instanced mesh first.
 
     const gestureBindings: any[] = [];
-    cards.forEach(({ index }, i) => {
-        gestureBindings.push(bindGestures(drag.current, (x, y) => updateCard(i, mouseToWorld(x, y, camera)))(i, index));
+    cards.forEach((_, i) => {
+        gestureBindings.push(bindGestures(drag.current, (x, y) => updateCard(i, mouseToWorld(x, y, camera)))(i));
     });
 
     if (!deck.length) return <></>
@@ -112,13 +102,13 @@ export default function CardsScene(props: GroupProps) {
                 {...gestureBindings[i]}
             >
                 <BaseCard
-                    key={`card${card.index}`}
+                    key={`card${i}`}
                     scale={cardScale}
                     {...springs[i]}
                     materials={<>
                         <meshStandardMaterial attachArray='material' map={deck[78].texture} />
                         <meshStandardMaterial attachArray='material' color={'#999'} />
-                        <meshStandardMaterial attachArray='material' map={deck[card.index].texture} />
+                        <meshStandardMaterial attachArray='material' map={deck[cards[i].index].texture} />
                         {debug && <group position={[0, 0, -.01]} rotation={[0, Math.PI, 0]}><Text scale={[20, 20, 20]} color={'#AA2288'}>{card.index}</Text></group>}
                     </>}
                 />
@@ -195,17 +185,43 @@ function layoutCard(
 
 // Display focused card
 function layoutFocus(
-    card: Card,
+    card: Card
 ) {
     return {
         position: [
-            0,
             -.5,
+            -.7,
             2.25,
         ] as [number, number, number],
         rotation: [Math.PI * .05, 0, 0] as [number, number, number],
     };
 };
+
+// Position of a card being dragged
+function layoutDragged(
+    i: number,
+    mouse: THREE.Vector2,
+    viewport: Size,
+    card: Card,
+    drag: DragRef,
+    hasFocus?: number,
+) {
+    const isDrag = hasFocus === i;
+    const { position, rotation } = isDrag ? layoutFocus(card) : {
+        position: [0, 0, .125] as [number, number, number],
+        rotation: [0, card.flip ? 0 : Math.PI, card.turn ? Math.PI / 2 : 0] as [number, number, number]
+    };
+    const factor = isDrag ? .1 : 1
+    return {
+        position: [
+            position[0] + (mouse.x * viewport.width) / 3 * factor,
+            position[1] + (mouse.y * viewport.height) / 3 * factor,
+            position[2]
+        ],
+        rotation: dragTilt(rotation, drag),
+        // config: cardMovementSpringConf
+    };
+}
 
 
 ///////////////////////
@@ -214,19 +230,17 @@ function layoutFocus(
 
 
 function onCardClick(
-    event: ThreeEvent<MouseEvent> | undefined,
+    i: number,
     card: Card,
-    cards: Card[],
     drawn: Card[],
     draw: () => void,
     renoise: () => void,
     bump: (i: number) => void,
-    reset: () => void,
-    turn: (i: number) => void,
     drag: DragRef,
     flip: (i: number) => void,
+    focus: (i?: number) => void,
+    hasFocus?: number,
 ) {
-    event?.stopPropagation();
     const isDrawn = drawn.includes(card);
     if (!isDrawn) {
         draw();
@@ -237,10 +251,14 @@ function onCardClick(
             return;
         }
         if (!card.flip) {
-            flip(cards.indexOf(card));
-            bump(cards.indexOf(card));
+            flip(i);
+            bump(i);
         } else {
-            turn(cards.indexOf(card));
+            if (hasFocus === i) {
+                focus(undefined)
+            } else {
+                focus(i)
+            }
         }
     }
 };
@@ -249,14 +267,14 @@ function bindGestures(
     dragRef: DragRef,
     drop: (x: number, y: number) => void,
 ) {
-    const { deck: _deck, cards, drawn, draw, reset, renoise, chaos, setChaos, updateCard, bump, turn, flip, hasFocus, focus } = useCardStore();
+    const { deck: _deck, cards, drawn, draw, reset, renoise, bump, turn, flip, hasFocus, focus } = useCardStore();
     return useGesture(
         {
             // Capture mouse pos and velocity while dragging
             onDrag: ({
                 velocity: [vX, vY],
                 direction: [dX, dY],
-                event
+                event,
             }) => {
                 const e = (event as unknown) as ThreeEvent<MouseEvent>;
                 event.stopPropagation();
@@ -270,33 +288,36 @@ function bindGestures(
             // Track an object being dragged
             onDragStart({ args: [i] }) {
                 if (dragRef.dragging) return;
-                dragRef.i = i;
+                if (!drawn.includes(cards[i])) {
+                    const card = draw()
+                    dragRef.i = card;
+                } else {
+                    dragRef.i = i;
+                }
                 dragRef.dragging = true;
                 dragRef.dragged = true;
             },
             // Track an object being dropped
-            onDragEnd({ xy: [x, y] }) {
-                drop(x, y);
+            onDragEnd({ xy: [x, y], args: [i] }) {
+                if (hasFocus !== i) drop(x, y);
                 dragRef.dragging = false;
                 dragRef.i = undefined;
             },
             // Show a card in detail on right click
-            onContextMenu({ event, args: [i, index] }) {
+            onContextMenu({ event, args: [i] }) {
                 event?.stopPropagation()
-                const card = cards[i]
-                if (!card.flip) return;
-                if (hasFocus?.index === i) {
-                    focus(undefined)
-                } else {
-                    focus(i)
-                }
+                if (!cards[i].flip) return;
+                turn(i)
             },
             onClick({ event, args: [i] }) {
-                event.stopPropagation()
+                event.stopPropagation();
                 const card = cards[i]
                 onCardClick(
-                    undefined, card, cards, drawn, draw, renoise, bump, reset, turn, dragRef, flip
+                    i, card, drawn, draw, renoise, bump, dragRef, flip, focus, hasFocus
                 )
+            },
+            onPointerDown({ event }) {
+                event.stopPropagation()
             }
         },
         {
@@ -343,7 +364,7 @@ interface DragRef {
     object?: THREE.Object3D;
 }
 
-// Am object for tracking mouse position
+// An object for tracking mouse position
 interface MouseRef {
     position: {
         x: number;
@@ -376,7 +397,7 @@ function newDragRef() {
     });
 };
 
-// Create a react mosue ref
+// Create a react mouse ref
 function newMouseRef() {
     return React.useRef<MouseRef>({
         hoverPosition: { x: 0, y: 0 },
@@ -406,6 +427,21 @@ function dragTilt(
         ),
         baseRotation[2]
     ];
+}
+
+// Augment rotation based on hover position
+function hoverTilt(
+    baseRotation: [number, number, number],
+    mouse: MouseRef,
+    xMax: 1,
+    yMax: 1,
+) {
+    const { x, y } = mouse.hoverPosition;
+    return [
+        baseRotation[0] + x * xMax,
+        baseRotation[1] + y * yMax,
+        baseRotation[2],
+    ]
 }
 
 // Transform mouse coordinates into world coordinates
