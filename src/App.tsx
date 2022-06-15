@@ -1,5 +1,7 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { QueryClientProvider } from 'react-query';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { queryClient } from '@opentarot/react';
 import { Leva } from 'leva';
 import useStore from './store/main';
 import NoMobile from './ui/no-mobile';
@@ -16,15 +18,18 @@ function App() {
         {!isLocal && <LoadScreen progress={loadingProgress} />}
         <Toast>⚠️ Hackathon Release</Toast>
         <NoMobile />
-        <BrowserRouter>
-            <Routes>
-                <Route path="/splash" element={<SplashScreen />} />
-                <Route path="/" element={<GameScreen />} />
-            </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/splash" element={<SplashScreen />} />
+                    <Route path="/" element={<GameScreen />} />
+                </Routes>
+            </BrowserRouter>
+        </QueryClientProvider>
         <Leva
             flat
-            hidden={!isLocal}
+            hidden={true}
+            // hidden={!isLocal}
             collapsed
         />
     </>

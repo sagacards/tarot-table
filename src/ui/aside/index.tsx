@@ -1,28 +1,18 @@
-import { ActorSubclass } from '@dfinity/agent';
-import { useThree } from '@react-three/fiber';
 import React from 'react';
-import { InternetComputerNFTCanister } from '../../ic/canisters/chaos-decks/chaos-decks.did';
+import { useConnect } from '@opentarot/connect';
 import useCardStore from '../../store/cards';
-import useStore from '../../store/main';
 import Button from '../button';
 import Styles from './styles.module.css';
+import { useOwnedDecks } from '@opentarot/react';
 
-export default function Aside () {
-    const { stoicConnect, plugConnect, connection, disconnect, actors : { chaos } } = useStore();
+export default function Aside() {
+
     const { setDeck, saveImage } = useCardStore();
+    const { connection, disconnect, connectStoic, connectPlug } = useConnect();
 
     const [open, setOpen] = React.useState<Boolean>(false);
-    const [decks, setDecks] = React.useState<number[]>();
+    const decks = useOwnedDecks(connection?.principal)
 
-    React.useEffect(() => {
-        if (!chaos) {
-            setDecks([]);
-            return;
-        };
-        const c = chaos as ActorSubclass<InternetComputerNFTCanister>;
-        c.decks().then(setDecks);
-    }, [chaos]);
-    
     return <div className={[Styles.root, open ? Styles.active : ''].join(' ')}>
         <div className={Styles.backdrop} onClick={() => setOpen(!open)}></div>
         <div className={[Styles.toggle].join(' ')} onClick={() => setOpen(!open)}>
@@ -36,21 +26,21 @@ export default function Aside () {
                         <div>{connection.wallet}: {connection.principal.toText()}</div>
                         <Button onClick={() => disconnect()}>Disconnect</Button>
                         <div>Decks</div>
-                        {decks && decks.map(d => <div style={{cursor: 'pointer'}} key={`decks${d}`} onClick={() => setDeck(d)}>
-                            Chaos Deck (#{d + 1})
+                        {decks && decks.map(d => <div style={{ cursor: 'pointer' }} key={`decks${d}`} onClick={() => console.log('set deck', d)}>
+                            {d?.deck?.name} (#{d.token})
                         </div>)}
                     </div>
                     : <div className={Styles.section}>
                         <div className={Styles.stoic}>
-                            <Button onClick={() => stoicConnect()}>Connect Stoic</Button>
+                            <Button onClick={() => connectStoic()}>Connect Stoic</Button>
                         </div>
                         <div className={Styles.plug}>
-                            <Button onClick={() => plugConnect()}>Connect Plug</Button>
+                            <Button onClick={() => connectPlug()}>Connect Plug</Button>
                         </div>
                     </div>
             }
             <div className={Styles.section}>
-                <Button onClick={() => {saveImage && saveImage(`Tarot Table Reading (${new Date().toLocaleString()})`)}}>📸 Capture</Button>
+                <Button onClick={() => { saveImage && saveImage(`Tarot Table Reading (${new Date().toLocaleString()})`) }}>📸 Capture</Button>
             </div>
         </div>
     </div>

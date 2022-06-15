@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion'
 import React from 'react'
-import { TarotDeckData } from 'src/api/cards'
+import { motion } from 'framer-motion'
+import { getCardData } from '@opentarot/core/dist/deck-data'
 import useCardStore from 'src/store/cards'
 import Button from 'ui/button'
 import Styles from './styles.module.css'
@@ -10,7 +10,7 @@ export interface Props {
 
 export default function CardDetail(props: Props) {
     const { cards, hasFocus, focus } = useCardStore()
-    const data = React.useMemo(() => hasFocus ? TarotDeckData[cards[hasFocus].index] : undefined, [hasFocus, cards]);
+    const data = React.useMemo(() => hasFocus ? getCardData(cards[hasFocus].index) : undefined, [hasFocus, cards]);
     return <motion.div
         className={[Styles.root].join(' ')}
         initial={{ opacity: 0 }}

@@ -189,11 +189,11 @@ function layoutFocus(
 ) {
     return {
         position: [
-            -.5,
-            -.7,
+            -.62,
+            -.2,
             2.25,
         ] as [number, number, number],
-        rotation: [Math.PI * .05, 0, 0] as [number, number, number],
+        rotation: [Math.PI * .01, 0, 0] as [number, number, number],
     };
 };
 
@@ -208,7 +208,7 @@ function layoutDragged(
 ) {
     const isFocus = hasFocus === i;
     const { position, rotation } = isFocus ? layoutFocus(card) : {
-        position: [0, 0, (drag.z || 0) + .05] as [number, number, number],
+        position: [0, 0, (drag.z || 0) + .025] as [number, number, number],
         rotation: [0, card.flip ? 0 : Math.PI, card.turn ? Math.PI / 2 : 0] as [number, number, number]
     };
     const factor = isFocus ? .1 : 1
@@ -300,7 +300,7 @@ function bindGestures(
             },
             // Track an object being dropped
             onDragEnd({ xy: [x, y], args: [i] }) {
-                if (hasFocus !== i) drop(x, y, dragRef.i as number);
+                if (hasFocus !== i) drop(nearest(x, 20), nearest(y, 10), dragRef.i as number);
                 dragRef.dragging = false;
                 dragRef.i = undefined;
                 dragRef.z = undefined;
@@ -308,7 +308,6 @@ function bindGestures(
             // Show a card in detail on right click
             onContextMenu({ event, args: [i] }) {
                 event?.stopPropagation()
-                if (!cards[i].flip) return;
                 turn(i)
             },
             onClick({ event, args: [i] }) {
@@ -413,7 +412,7 @@ function newMouseRef() {
 function dragTilt(
     baseRotation: [number, number, number],
     drag: DragRef,
-    factor = 1,
+    factor = .5,
     rangeFactor = .25,
 ) {
     const { vX, vY, dX, dY } = drag;
@@ -465,3 +464,7 @@ function mouseToWorld(x: number, y: number, camera: THREE.Camera) {
     pos.copy(camera.position).add(vec.multiplyScalar(distance));
     return [pos.x, pos.y, .01] as [number, number, number];
 };
+
+function nearest(number: number, x = 50) {
+    return Math.round(number / x) * x;
+}

@@ -47,7 +47,7 @@ function RootScene() {
     }
 
     React.useEffect(() => {
-        camera.position.set(0, -1, 5);
+        camera.position.set(0, -.25, 5);
         camera.lookAt(0, 0, 0);
         setSaveImage(saveImage);
         scene.background = null;
