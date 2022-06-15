@@ -21,6 +21,7 @@
         "@react-three/fiber": "^7.0.24",
         "@ungap/structured-clone": "^0.3.4",
         "@use-gesture/react": "^10.2.4",
+        "events": "^3.3.0",
         "framer-motion": "^6.3.11",
         "ic-stoic-identity": "^2.0.0",
         "leva": "^0.9.18",
