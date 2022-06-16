@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { getCardData } from '@opentarot/core/dist/deck-data'
+import { getCardData } from '@opentarot/core'
 import useCardStore from 'src/store/cards'
 import Button from 'ui/button'
 import Styles from './styles.module.css'
