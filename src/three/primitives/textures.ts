@@ -52,18 +52,19 @@ export default function useDeck(identifier?: string) {
     React.useEffect(() => {
         setLoading(true);
         const rws = useRWS();
-        const deck: Promise<string[]> = token?.index
-            ? fetch(
-                  `${protocol}${token?.canister}.${host}/manifest/${token?.index}`
-              )
-                  .then(res => res.json())
-                  .then(x =>
-                      x.map(
-                          (y: any) =>
-                              `${protocol}${token?.canister}.${host}/${y.image}`
-                      )
+        const deck: Promise<string[]> =
+            token?.index !== undefined
+                ? fetch(
+                      `${protocol}${token?.canister}.${host}/manifest/${token?.index}`
                   )
-            : rws;
+                      .then(res => res.json())
+                      .then(x => {
+                          return x.map(
+                              (y: any) =>
+                                  `${protocol}${token?.canister}.${host}/${y.image}`
+                          );
+                      })
+                : rws;
         deck.then(d => {
             return loadProgress<THREE.Texture>(loadDeck(d), setLoadingProgress);
         }).then(d => {
