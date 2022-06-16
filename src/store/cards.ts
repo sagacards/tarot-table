@@ -13,8 +13,8 @@ import { cardDimensions } from '../three/primitives/geometry';
 const deck = shuffle(createDeck(globalChaos));
 
 const useCardStore = create<{
-    deck?: number;
-    setDeck: (i: number) => void;
+    deck?: string;
+    setDeck: (d?: string) => void;
     chaos: number;
     setChaos: (chaos: number) => void;
     cards: Card[];
@@ -35,7 +35,7 @@ const useCardStore = create<{
     saveImage: undefined,
     setSaveImage: f => set(state => ({ saveImage: f })),
     deck: undefined,
-    setDeck: i => set(state => ({ deck: i })),
+    setDeck: deck => set(state => ({ deck })),
     chaos: globalChaos,
     setChaos: chaos => set(state => ({ chaos })),
     cards: deck,

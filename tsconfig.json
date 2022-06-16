@@ -18,7 +18,7 @@
         "baseUrl": ".",
         "paths": {
             "assets/*": ["src/assets/*"],
-            "ic/*": ["src/pages/*"],
+            "screens/*": ["src/screens/*"],
             "three/*": ["src/three/*"],
             "ui/*": ["src/ui/*"],
             "store/*": ["src/hooks/*"]

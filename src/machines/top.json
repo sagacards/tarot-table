@@ -1,0 +1,31 @@
+{
+    "id": "TarotTable",
+    "initial": "TitleScreen",
+    "states": {
+        "TitleScreen": {
+            "entry": "BeginPreload",
+            "on": {
+                "DECKS": {
+                    "target": "DecksScreen"
+                },
+                "GAME": {
+                    "target": "GameScreen"
+                }
+            }
+        },
+        "DecksScreen": {
+            "on": {
+                "DONE": {
+                    "target": "GameScreen"
+                }
+            }
+        },
+        "GameScreen": {
+            "on": {
+                "DECKS": {
+                    "target": "DecksScreen"
+                }
+            }
+        }
+    }
+}

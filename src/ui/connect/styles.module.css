@@ -1,0 +1,10 @@
+.root {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+
+    display: flex;
+    flex-flow: column;
+    gap: 10px;
+}

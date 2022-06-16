@@ -1,3 +1,4 @@
+import { decodeTokenIdentifier } from 'ictool';
 import React from 'react';
 import useStore from 'src/store/main';
 import * as THREE from 'three';
@@ -5,18 +6,16 @@ import * as THREE from 'three';
 const isLocal = false;
 const protocol = isLocal ? 'http://' : 'https://';
 const host = isLocal ? 'localhost:8000' : 'raw.ic0.app';
-const canister = '6e6eb-piaaa-aaaaj-qal6a-cai';
-export const url = `${protocol}${canister}.${host}`;
 
 export const loader = new THREE.TextureLoader();
-export const textures : THREE.Texture[] = [];
+export const textures: THREE.Texture[] = [];
 
-export function loadDeck (cardURIs : string[]) {
-    const promises : Promise<THREE.Texture>[] = [];
+export function loadDeck(cardURIs: string[]) {
+    const promises: Promise<THREE.Texture>[] = [];
     let i = 0;
     for (const uri of cardURIs) {
         promises.push(
-            new Promise((resolve) => {
+            new Promise(resolve => {
                 textures[i] = loader.load(uri, resolve);
             })
         );
@@ -25,61 +24,78 @@ export function loadDeck (cardURIs : string[]) {
     return promises;
 }
 
-export function loadProgress<T>(promises : Promise<T>[], callback : (percent : number) => void) {
+export function loadProgress<T>(
+    promises: Promise<T>[],
+    callback: (percent: number) => void
+) {
     let d = 0;
     callback(0);
     for (const p of promises) {
-      p.then(()=> {    
-        d ++;
-        callback( (d * 100) / promises.length );
-      });
+        p.then(() => {
+            d++;
+            callback((d * 100) / promises.length);
+        });
     }
     return Promise.all(promises);
 }
 
-export default function useDeck (index?: number ) {
+export default function useDeck(identifier?: string) {
+    const token = React.useMemo(
+        () =>
+            identifier !== undefined
+                ? decodeTokenIdentifier(identifier)
+                : undefined,
+        []
+    );
     const [cards, setCards] = React.useState<Card[]>([]);
     const { setLoading, setLoadingProgress } = useStore();
     React.useEffect(() => {
         setLoading(true);
         const rws = useRWS();
-        const deck : Promise<string[]> = index
-            ? fetch(`${url}/manifest/${index}`)
-                .then(res => res.json())
-                .then(x => x.map((y: any) => `${url}/${y.image}`))
+        const deck: Promise<string[]> = token?.index
+            ? fetch(
+                  `${protocol}${token?.canister}.${host}/manifest/${token?.index}`
+              )
+                  .then(res => res.json())
+                  .then(x =>
+                      x.map(
+                          (y: any) =>
+                              `${protocol}${token?.canister}.${host}/${y.image}`
+                      )
+                  )
             : rws;
-        deck
-        .then(d => {
-            return loadProgress<THREE.Texture>(loadDeck(d), setLoadingProgress)
-        })
-        .then(d => {
+        deck.then(d => {
+            return loadProgress<THREE.Texture>(loadDeck(d), setLoadingProgress);
+        }).then(d => {
             setLoading(false);
-            setCards(d.map((c, i) => ({
-                name: '',
-                suit: 'trump',
-                number: 0,
-                index: i,
-                image: '',
-                texture: textures[i],
-            })))
-        })
-    }, [index]);
+            setCards(
+                d.map((c, i) => ({
+                    name: '',
+                    suit: 'trump',
+                    number: 0,
+                    index: i,
+                    image: '',
+                    texture: textures[i],
+                }))
+            );
+        });
+    }, [token]);
     return cards;
 }
 
-export async function useRWS () {
-    const rws : string[] = [];
+export async function useRWS() {
+    const rws: string[] = [];
     for (let i = 0; i < 80; i++) {
-        rws.push((await import(`../../assets/deck/${i}.webp`)).default)
+        rws.push((await import(`../../assets/deck/${i}.webp`)).default);
     }
     return rws;
-};
+}
 
 interface Card {
-    index   : number;
-    number  : number;
-    suit    : 'trump' | 'wands' | 'swords' | 'cups' | 'pentacles';
-    name    : string;
-    image   : string;
-    texture : THREE.Texture;
-};
+    index: number;
+    number: number;
+    suit: 'trump' | 'wands' | 'swords' | 'cups' | 'pentacles';
+    name: string;
+    image: string;
+    texture: THREE.Texture;
+}

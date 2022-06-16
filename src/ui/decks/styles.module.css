@@ -1,0 +1,64 @@
+.root {
+    max-width: 100%;
+}
+
+.scroller {
+    display: flex;
+    flex: 1 0 auto;
+    gap: 20px;
+    min-width: 100%;
+    place-content: center;
+}
+
+.deck {
+    display: flex;
+    place-content: center;
+    place-items: center;
+    flex-flow: column;
+}
+
+.deck.active img {
+    box-shadow: 0 0 0 4px var(--foreground);
+}
+
+.deck.active figcaption {
+    color: var(--foreground);
+}
+
+.deck figure {
+    aspect-ratio: 1;
+    width: 300px;
+    display: flex;
+    place-content: center;
+    place-items: center;
+    position: relative;
+}
+
+.deck figure img {
+    border-radius: 5%;
+    aspect-ratio: 2.75 / 4.75;
+    height: 80%;
+
+    position: absolute;
+
+    transition: box-shadow 240ms ease-out;
+}
+
+.deck figure img:nth-child(1) {
+    transform: translateX(-62px) translateY(12px) rotate(-5deg);
+}
+
+.deck figure img:nth-child(3) {
+    transform: translateX(62px) translateY(12px) rotate(5deg);
+}
+
+.deck figcaption {
+    color: var(--chrome-4);
+    font-weight: 500;
+
+    transition: color 240ms ease-out;
+
+    display: flex;
+    place-items: center;
+    gap: 10px;
+}

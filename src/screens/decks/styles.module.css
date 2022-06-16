@@ -1,0 +1,43 @@
+.root {
+    width: 100vw;
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: column;
+    place-content: space-around;
+    place-items: center;
+}
+
+.title {
+    font-family: 'uncial antiqua';
+    font-size: 38px;
+    display: flex;
+    place-items: baseline;
+    gap: 20px;
+}
+
+.decks {
+    height: 300px;
+    width: 100%;
+}
+
+.count {
+    color: var(--chrome-4);
+    font-size: 20px;
+    font-family: 'InterVariable', sans-serif;
+}
+
+.actions {
+    height: 25vh;
+    place-content: center;
+    display: flex;
+    flex-flow: column;
+    place-items: center;
+    gap: 20px;
+}
+
+.connect {
+    display: flex;
+    place-items: center;
+    gap: 10px;
+}
