@@ -9,7 +9,7 @@ import { atomWithMachine } from 'jotai/xstate';
 
 const screenState = atomWithMachine(() => createMachine(TopMachine));
 
-const topMap = {
+const topMap: { [key: string]: React.FC } = {
     TitleScreen,
     DecksScreen,
     GameScreen,
@@ -17,7 +17,14 @@ const topMap = {
 
 export function useTopScreen() {
     const [state, set] = useAtom(screenState);
-    const Screen = React.useMemo(() => topMap[state.value], [state.value]);
+    const Screen = React.useMemo(
+        () =>
+            topMap[
+                // @ts-ignore
+                state.value
+            ],
+        [state.value]
+    );
     function navigate(event: string) {
         set(event);
     }
